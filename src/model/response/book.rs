@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
-#[allow(dead_code)]
+#[derive(Serialize, Deserialize)]
 struct Book {
     id: u32,
     title: String,
