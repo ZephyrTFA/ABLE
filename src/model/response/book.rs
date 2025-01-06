@@ -10,5 +10,3 @@ struct Book {
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
-
-impl Book {}
