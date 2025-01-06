@@ -1,9 +1,13 @@
-use std::collections::{hash_map::Values, HashMap};
+use std::{
+    collections::{hash_map::Values, HashMap},
+    fmt::Display,
+};
 
 use chrono::Utc;
 
 use crate::model::response::book::Book;
 
+#[derive(Default, Debug)]
 pub struct Library {
     books: HashMap<String, Book>,
 }
@@ -12,6 +16,16 @@ pub enum LibraryErrorStatus {
     IsbnExists,
     IsbnMismatch,
     IdNotFound,
+}
+
+impl Display for LibraryErrorStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::IsbnExists => f.write_str("isbn exists"),
+            Self::IsbnMismatch => f.write_str("isbn mismatch"),
+            Self::IdNotFound => f.write_str("id not found"),
+        }
+    }
 }
 
 impl Library {

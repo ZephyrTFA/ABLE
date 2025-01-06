@@ -630,6 +630,7 @@ dependencies = [
  "dotenv",
  "env_logger",
  "log",
+ "once_cell",
  "serde",
  "serde_json",
  "tokio",
