@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum ApiErrorCode {
     InternalServerError = 255,
 }
@@ -8,7 +8,6 @@ pub enum ApiErrorCode {
 #[derive(Serialize, Debug)]
 pub struct ApiResponse<T: Serialize> {
     status: String,
-    #[serde(flatten)]
     data: Option<T>,
 }
 
@@ -31,11 +30,16 @@ impl<T: Serialize> ApiResponse<T> {
 #[derive(Serialize, Debug)]
 pub struct ApiError {
     error: ApiErrorCode,
+    error_code: usize,
     message: String,
 }
 
 impl ApiError {
     pub fn new(error: ApiErrorCode, message: String) -> Self {
-        Self { error, message }
+        Self {
+            error_code: error as usize,
+            error,
+            message,
+        }
     }
 }
