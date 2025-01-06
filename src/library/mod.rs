@@ -1,7 +1,4 @@
-use std::{
-    collections::{hash_map::Values, HashMap},
-    fmt::Display,
-};
+use std::{collections::HashMap, fmt::Display};
 
 use chrono::Utc;
 use log::{trace, warn};
@@ -48,7 +45,7 @@ impl Library {
         Ok(())
     }
 
-    pub fn get_books(&self) -> Values<String, Book> {
+    pub fn get_books(&self) -> impl Iterator<Item = &Book> {
         self.books.values()
     }
 

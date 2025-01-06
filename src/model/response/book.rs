@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Book {
     id: i32,
     title: String,
@@ -10,6 +10,28 @@ pub struct Book {
     isbn: String,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct BookResponse {
+    book: Book,
+}
+
+impl From<&Book> for BookResponse {
+    fn from(book: &Book) -> Self {
+        Self { book: book.clone() }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct BooksResponse {
+    books: Vec<Book>,
+}
+
+impl From<Vec<Book>> for BooksResponse {
+    fn from(books: Vec<Book>) -> Self {
+        Self { books }
+    }
 }
 
 impl Book {
