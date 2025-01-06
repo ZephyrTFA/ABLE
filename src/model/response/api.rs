@@ -5,25 +5,37 @@ pub enum ApiErrorCode {
     InternalServerError = 255,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum ApiResponse {
-    Error(ApiErrorResponse),
-    Success(),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ApiErrorResponse {
+#[derive(Serialize, Debug)]
+pub struct ApiResponse<T: Serialize> {
     status: String,
-    code: ApiErrorCode,
-    message: Option<String>,
+    #[serde(flatten)]
+    data: Option<T>,
 }
 
-impl ApiErrorResponse {
-    pub fn new(error: ApiErrorCode, message: Option<String>) -> Self {
+impl<T: Serialize> ApiResponse<T> {
+    pub fn success(data: Option<T>) -> Self {
+        Self {
+            status: "success".to_string(),
+            data,
+        }
+    }
+
+    pub fn error(data: T) -> Self {
         Self {
             status: "error".to_string(),
-            code: error,
-            message,
+            data: Some(data),
         }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct ApiError {
+    error: ApiErrorCode,
+    message: String,
+}
+
+impl ApiError {
+    pub fn new(error: ApiErrorCode, message: String) -> Self {
+        Self { error, message }
     }
 }

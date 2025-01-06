@@ -7,21 +7,23 @@ use once_cell::sync::Lazy;
 use crate::{
     library::Library,
     model::response::{
-        api::{ApiErrorCode, ApiErrorResponse, ApiResponse},
+        api::{ApiError, ApiErrorCode, ApiResponse},
         book::Book,
     },
 };
 
-fn get_library() -> Result<MutexGuard<'static, Library>, ApiResponse> {
+type Response<T> = Result<Json<ApiResponse<T>>, Json<ApiResponse<ApiError>>>;
+
+fn get_library() -> Result<MutexGuard<'static, Library>, ApiResponse<ApiError>> {
     trace!("getting library lock");
     static LIBRARY: Lazy<Mutex<Library>> = Lazy::new(|| Mutex::new(Library::default()));
 
     let library = LIBRARY.lock();
     if let Err(error) = &library {
         warn!("library mutex is poisoned");
-        return Err(ApiResponse::Error(ApiErrorResponse::new(
+        return Err(ApiResponse::error(ApiError::new(
             ApiErrorCode::InternalServerError,
-            Some(error.to_string()),
+            error.to_string(),
         )));
     }
     let library = library.unwrap();
@@ -29,79 +31,55 @@ fn get_library() -> Result<MutexGuard<'static, Library>, ApiResponse> {
     Ok(library)
 }
 
-pub async fn add_book(extract::Json(book): extract::Json<Book>) -> Json<ApiResponse> {
-    let library = get_library();
-    if let Err(err) = library {
-        return Json(err);
-    }
-    let mut library = library.unwrap();
-
-    let result = library.add_book(book);
-    if let Err(error) = result {
-        return Json(ApiResponse::Error(ApiErrorResponse::new(
-            ApiErrorCode::InternalServerError,
-            Some(error.to_string()),
-        )));
-    }
+pub async fn add_book(extract::Json(_book): extract::Json<Book>) -> Response<String> {
+    let _library = get_library()?;
 
     error!("not implemented at {}:{}", file!(), line!());
-    Json(ApiResponse::Error(ApiErrorResponse::new(
+    Err(Json(ApiResponse::error(ApiError::new(
         ApiErrorCode::InternalServerError,
-        Some("not implemented".to_string()),
-    )))
+        "not implemented".to_string(),
+    ))))
 }
 
-pub async fn get_books() -> Json<ApiResponse> {
-    let library = get_library();
-    if let Err(err) = library {
-        return Json(err);
-    }
+pub async fn get_books<'a>() -> Response<String> {
+    let _library = get_library()?;
 
     error!("not implemented at {}:{}", file!(), line!());
-    Json(ApiResponse::Error(ApiErrorResponse::new(
+    Err(Json(ApiResponse::error(ApiError::new(
         ApiErrorCode::InternalServerError,
-        Some("not implemented".to_string()),
-    )))
+        "not implemented".to_string(),
+    ))))
 }
 
-pub async fn get_book_by_id(extract::Path(_id): extract::Path<u32>) -> Json<ApiResponse> {
-    let library = get_library();
-    if let Err(err) = library {
-        return Json(err);
-    }
+pub async fn get_book_by_id(extract::Path(_id): extract::Path<u32>) -> Response<String> {
+    let _library = get_library()?;
 
     error!("not implemented at {}:{}", file!(), line!());
-    Json(ApiResponse::Error(ApiErrorResponse::new(
+    Err(Json(ApiResponse::error(ApiError::new(
         ApiErrorCode::InternalServerError,
-        Some("not implemented".to_string()),
-    )))
+        "not implemented".to_string(),
+    ))))
 }
 
 pub async fn update_book(
     extract::Path(_id): extract::Path<u32>,
     extract::Json(_book): extract::Json<Book>,
-) -> Json<ApiResponse> {
-    let library = get_library();
-    if let Err(err) = library {
-        return Json(err);
-    }
+) -> Response<String> {
+    let _library = get_library()?;
 
     error!("not implemented at {}:{}", file!(), line!());
-    Json(ApiResponse::Error(ApiErrorResponse::new(
+    Err(Json(ApiResponse::error(ApiError::new(
         ApiErrorCode::InternalServerError,
-        Some("not implemented".to_string()),
-    )))
+        "not implemented".to_string(),
+    ))))
 }
 
-pub async fn drop_book(extract::Path(_id): extract::Path<u32>) -> Json<ApiResponse> {
-    let library = get_library();
-    if let Err(err) = library {
-        return Json(err);
-    }
+pub async fn drop_book(extract::Path(_id): extract::Path<u32>) -> Response<String> {
+    let _library = get_library()?;
 
     error!("not implemented at {}:{}", file!(), line!());
-    Json(ApiResponse::Error(ApiErrorResponse::new(
+    Err(Json(ApiResponse::error(ApiError::new(
         ApiErrorCode::InternalServerError,
-        Some("not implemented".to_string()),
-    )))
+        "not implemented".to_string(),
+    ))))
 }

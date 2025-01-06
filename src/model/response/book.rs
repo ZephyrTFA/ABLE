@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Book {
-    id: u32,
+    id: i32,
     title: String,
     author: String,
     publication_year: i32,
@@ -13,7 +13,7 @@ pub struct Book {
 }
 
 impl Book {
-    pub fn id(&self) -> &u32 {
+    pub fn id(&self) -> &i32 {
         &self.id
     }
 

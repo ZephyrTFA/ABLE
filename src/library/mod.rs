@@ -4,6 +4,7 @@ use std::{
 };
 
 use chrono::Utc;
+use log::{trace, warn};
 
 use crate::model::response::book::Book;
 
@@ -30,15 +31,18 @@ impl Display for LibraryErrorStatus {
 
 impl Library {
     pub fn sync(&self) {
+        trace!("syncing");
         todo!()
     }
 
     pub fn add_book(&mut self, book: Book) -> Result<(), LibraryErrorStatus> {
         let isbn = book.isbn();
         if self.books.contains_key(isbn) {
+            warn!("refusing to add book with conflicting isbn: {isbn}");
             return Err(LibraryErrorStatus::IsbnExists);
         }
 
+        trace!("adding book with isbn: {}", isbn);
         self.books.insert(isbn.to_string(), book);
         self.sync();
         Ok(())
@@ -52,13 +56,17 @@ impl Library {
         self.books.get(isbn)
     }
 
-    pub fn get_book_by_id(&self, id: &u32) -> Option<&Book> {
+    pub fn get_book_by_id(&self, id: &i32) -> Option<&Book> {
         self.get_books().find(|book| book.id() == id)
     }
 
     pub fn update_book(&mut self, mut book: Book) -> Result<(), LibraryErrorStatus> {
         let old_book = self.get_book_by_id(book.id());
         if old_book.is_none() {
+            warn!(
+                "refusing to update book id not found in library: {}",
+                book.id()
+            );
             return Err(LibraryErrorStatus::IdNotFound);
         }
         let old_book = old_book.unwrap();
@@ -66,9 +74,14 @@ impl Library {
         let isbn = book.isbn().clone();
         let old_isbn = old_book.isbn();
         if &isbn != old_isbn {
+            warn!(
+                "refusing to update book with isbn mismatch: {} != {}",
+                isbn, old_isbn
+            );
             return Err(LibraryErrorStatus::IsbnMismatch);
         }
 
+        trace!("updating book with isbn: {isbn}");
         // They can pass whatever timestamp they want; we overwrite it with what the actual time of the transaction.
         book.set_created_at(*old_book.created_at());
         book.set_updated_at(Utc::now());
@@ -77,13 +90,15 @@ impl Library {
         Ok(())
     }
 
-    pub fn drop_book(&mut self, id: &u32) -> Result<(), LibraryErrorStatus> {
+    pub fn drop_book(&mut self, id: &i32) -> Result<(), LibraryErrorStatus> {
         let book = self.get_book_by_id(id);
         if book.is_none() {
+            warn!("failed to drop book id not found in library: {}", id);
             return Err(LibraryErrorStatus::IdNotFound);
         }
 
         let isbn = book.unwrap().isbn().clone();
+        trace!("dropping book: {isbn}");
         self.books.remove(&isbn);
         self.sync();
         Ok(())
