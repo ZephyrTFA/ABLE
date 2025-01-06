@@ -1,3 +1,0 @@
-struct Logger;
-
-impl Logger {}

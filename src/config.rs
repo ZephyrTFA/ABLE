@@ -1,5 +1,7 @@
 use std::{env, net::Ipv4Addr};
 
+use log::trace;
+
 #[derive(Debug)]
 pub struct Config {
     bind_address: Ipv4Addr,
@@ -8,7 +10,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> Result<Self, String> {
-        println!("Initializing config from environment.");
+        trace!("Initializing config from environment.");
 
         let raw_address = env::var("BIND_ADDRESS").unwrap_or("127.0.0.1".to_string());
         let bind_address = raw_address.parse::<Ipv4Addr>();
