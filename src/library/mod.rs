@@ -27,11 +27,6 @@ impl Display for LibraryErrorStatus {
 }
 
 impl Library {
-    pub fn sync(&self) {
-        trace!("syncing");
-        todo!()
-    }
-
     pub fn add_book(&mut self, book: Book) -> Result<(), LibraryErrorStatus> {
         let isbn = book.isbn();
         if self.books.contains_key(isbn) {
@@ -41,7 +36,6 @@ impl Library {
 
         trace!("adding book with isbn: {}", isbn);
         self.books.insert(isbn.to_string(), book);
-        self.sync();
         Ok(())
     }
 
@@ -83,7 +77,6 @@ impl Library {
         book.set_created_at(*old_book.created_at());
         book.set_updated_at(Utc::now());
         self.books.insert(isbn, book);
-        self.sync();
         Ok(())
     }
 
@@ -97,7 +90,6 @@ impl Library {
         let isbn = book.unwrap().isbn().clone();
         trace!("dropping book: {isbn}");
         self.books.remove(&isbn);
-        self.sync();
         Ok(())
     }
 }

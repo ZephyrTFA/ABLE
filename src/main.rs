@@ -6,6 +6,7 @@ use routes::register_routes;
 use tokio::net::TcpListener;
 
 pub mod config;
+pub mod database;
 pub mod library;
 pub mod model;
 pub mod routes;
