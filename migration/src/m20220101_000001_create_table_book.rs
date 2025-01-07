@@ -14,10 +14,10 @@ impl MigrationTrait for Migration {
                     .col(pk_auto(Book::Id))
                     .col(string(Book::Title))
                     .col(string(Book::Author))
-                    .col(string(Book::PublicationYear))
+                    .col(integer(Book::PublicationYear))
                     .col(string(Book::ISBN))
-                    .col(string(Book::CreatedAt))
-                    .col(string(Book::UpdatedAt))
+                    .col(timestamp(Book::CreatedAt))
+                    .col(timestamp(Book::UpdatedAt))
                     .to_owned(),
             )
             .await

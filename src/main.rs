@@ -8,7 +8,6 @@ use routes::init_router;
 use tokio::net::TcpListener;
 
 pub mod config;
-pub mod database;
 pub mod library;
 pub mod model;
 pub mod orm;
