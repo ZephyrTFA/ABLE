@@ -79,12 +79,14 @@ impl Library {
             books.insert(book.isbn.clone(), book as Book);
         }
 
-        let db_result = book::Entity::insert_many(missing)
-            .exec(&self.database)
-            .await;
-        if let Err(error) = db_result {
-            warn!("failed to sync library: {}", error.to_string());
-            return Err(LibraryErrorStatus::DatabaseError);
+        if !missing.is_empty() {
+            let db_result = book::Entity::insert_many(missing)
+                .exec(&self.database)
+                .await;
+            if let Err(error) = db_result {
+                warn!("failed to sync library: {}", error.to_string());
+                return Err(LibraryErrorStatus::DatabaseError);
+            }
         }
         mem::swap(&mut self.books, &mut Arc::new(Mutex::new(books)));
 
