@@ -41,10 +41,17 @@ async fn main() {
         .unwrap_or("mysql://library:library@localhost:3306/library".to_string());
     let library = Library::new(&database_connection_string).await;
     if let Err(error) = &library {
-        warn!("Failed to initialize library: {error}");
+        error!("Failed to initialize library: {error}");
         return;
     }
-    let app = init_router(library.unwrap());
+
+    let mut library = library.unwrap();
+    if let Err(error) = library.full_sync().await {
+        error!("Failed to syncronize library: {error}");
+        return;
+    }
+
+    let app = init_router(library);
 
     let target_bind = format!("{}:{}", config.bind_address(), config.bind_port());
     info!("Initializing server at http://{target_bind}.");

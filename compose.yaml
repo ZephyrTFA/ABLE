@@ -1,0 +1,12 @@
+services:
+  server:
+    build:
+      context: .
+      target: final
+    ports:
+      - 1337:1337
+    environment:
+      DATABASE_URL: mysql://library:library@host.docker.internal:3306/library
+      RUST_LOG: trace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

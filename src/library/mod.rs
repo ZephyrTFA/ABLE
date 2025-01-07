@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Display, mem, sync::Arc};
 
 use chrono::Utc;
-use log::{trace, warn};
+use log::{info, trace, warn};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, Database, DatabaseConnection, EntityTrait, IntoActiveModel,
     QueryFilter, TryIntoModel,
@@ -49,7 +49,8 @@ impl Display for LibraryErrorStatus {
 
 impl Library {
     pub async fn full_sync(&mut self) -> Result<(), LibraryErrorStatus> {
-        trace!("inserting to db");
+        info!("Syncronizing library.");
+
         let db_result = book::Entity::find().all(&self.database).await;
         if let Err(error) = db_result {
             warn!("failed to add book: {}", error.to_string());

@@ -32,4 +32,5 @@ pub fn init_router(library: Library) -> Router {
 
 async fn root() -> Redirect {
     Redirect::permanent("/viewer")
+    // todo: implement front-end viewer
 }
