@@ -1,5 +1,3 @@
-use std::env;
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
@@ -9,13 +7,13 @@ pub enum ApiErrorCode {
     InternalServerError = 500,
 }
 
-#[derive(Serialize, Debug)]
-pub struct ApiResponse<T: Serialize> {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ApiResponse<T: Serialize + Send> {
     status: String,
     data: Option<T>,
 }
 
-impl<T: Serialize> ApiResponse<T> {
+impl<T: Serialize + Send> ApiResponse<T> {
     pub fn success(data: Option<T>) -> Self {
         Self {
             status: "success".to_string(),
@@ -31,7 +29,7 @@ impl<T: Serialize> ApiResponse<T> {
     }
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApiError {
     error: ApiErrorCode,
     error_code: usize,

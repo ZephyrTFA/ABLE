@@ -1,76 +1,13 @@
-use chrono::{DateTime, Utc};
+use crate::orm::book::Book;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub struct Book {
-    id: i32,
-    title: String,
-    author: String,
-    publication_year: i32,
-    isbn: String,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-}
-
-#[derive(Serialize, Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BookResponse {
-    book: Book,
+    pub book: Book,
 }
 
-impl From<&Book> for BookResponse {
-    fn from(book: &Book) -> Self {
-        Self { book: book.clone() }
-    }
-}
-
-#[derive(Serialize, Debug)]
-pub struct BooksResponse {
-    books: Vec<Book>,
-}
-
-impl From<Vec<Book>> for BooksResponse {
-    fn from(books: Vec<Book>) -> Self {
-        Self { books }
-    }
-}
-
-impl Book {
-    pub fn id(&self) -> &i32 {
-        &self.id
-    }
-
-    pub fn title(&self) -> &String {
-        &self.title
-    }
-
-    pub fn author(&self) -> &String {
-        &self.author
-    }
-
-    pub fn publication_year(&self) -> &i32 {
-        &self.publication_year
-    }
-
-    pub fn isbn(&self) -> &String {
-        &self.isbn
-    }
-
-    pub fn created_at(&self) -> &DateTime<Utc> {
-        &self.created_at
-    }
-
-    pub fn updated_at(&self) -> &DateTime<Utc> {
-        &self.updated_at
-    }
-
-    pub fn set_created_at(&mut self, created_at: DateTime<Utc>) {
-        self.created_at = created_at;
-    }
-
-    pub fn set_updated_at(&mut self, updated_at: DateTime<Utc>) {
-        self.updated_at = updated_at;
-    }
-}
+#[cfg(test)]
+use chrono::Utc;
 
 #[test]
 fn test_serialization() {

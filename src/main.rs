@@ -1,14 +1,17 @@
+use std::env;
+
 use ::log::{error, info, warn};
-use axum::Router;
 use config::Config;
 use dotenv::dotenv;
-use routes::register_routes;
+use library::Library;
+use routes::init_router;
 use tokio::net::TcpListener;
 
 pub mod config;
 pub mod database;
 pub mod library;
 pub mod model;
+pub mod orm;
 pub mod routes;
 
 #[tokio::main]
@@ -34,7 +37,15 @@ async fn main() {
     let config = config.unwrap();
 
     info!("Initializing router.");
-    let app = register_routes(Router::new());
+
+    let database_connection_string = env::var("DATABASE_URL")
+        .unwrap_or("mysql://library:library@localhost:3306/library".to_string());
+    let library = Library::new(&database_connection_string).await;
+    if let Err(error) = &library {
+        warn!("Failed to initialize library: {error}");
+        return;
+    }
+    let app = init_router(library.unwrap());
 
     let target_bind = format!("{}:{}", config.bind_address(), config.bind_port());
     info!("Initializing server at http://{target_bind}.");
