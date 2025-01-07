@@ -1,4 +1,9 @@
-use std::env;
+use std::{
+    env,
+    sync::Arc,
+    thread::{sleep, spawn},
+    time::Duration,
+};
 
 use ::log::{error, info, warn};
 use config::Config;
@@ -6,6 +11,7 @@ use dotenv::dotenv;
 use library::Library;
 use routes::init_router;
 use tokio::net::TcpListener;
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
 pub mod config;
 pub mod library;
@@ -52,6 +58,23 @@ async fn main() {
     }
 
     let app = init_router(library);
+
+    let governor_config = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(config.rate_limit_per_second())
+            .burst_size(config.rate_limit_burst())
+            .finish()
+            .unwrap(),
+    );
+    let governor = governor_config.limiter().clone();
+    let interval = Duration::from_secs(60);
+    spawn(move || loop {
+        sleep(interval);
+        governor.retain_recent();
+    });
+    let app = app.layer(GovernorLayer {
+        config: governor_config,
+    });
 
     let target_bind = format!("{}:{}", config.bind_address(), config.bind_port());
     info!("Initializing server at http://{target_bind}.");
