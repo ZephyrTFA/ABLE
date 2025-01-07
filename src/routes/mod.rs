@@ -6,7 +6,7 @@ use axum::{
 use library::{add_book, drop_book, get_book_by_id, get_books, update_book};
 use log::trace;
 
-use crate::library::Library;
+use crate::state::AppState;
 
 pub mod library;
 
@@ -17,7 +17,7 @@ macro_rules! register_route {
     };
 }
 
-pub fn init_router(library: Library) -> Router {
+pub fn init_router(state: AppState) -> Router {
     trace!("Registering routes.");
     let mut router = Router::new();
 
@@ -27,7 +27,7 @@ pub fn init_router(library: Library) -> Router {
     register_route!(router, "/books/{id}", post(add_book));
     register_route!(router, "/books/{id}", put(update_book));
     register_route!(router, "/books/{id}", delete(drop_book));
-    router.with_state(library)
+    router.with_state(state)
 }
 
 async fn root() -> Redirect {

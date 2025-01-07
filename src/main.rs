@@ -8,16 +8,20 @@ use std::{
 use ::log::{error, info, warn};
 use config::Config;
 use dotenv::dotenv;
-use library::Library;
 use routes::init_router;
+use sea_orm::Database;
+use state::create_state;
 use tokio::net::TcpListener;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
+pub mod auth;
 pub mod config;
+pub mod database;
 pub mod library;
 pub mod model;
 pub mod orm;
 pub mod routes;
+pub mod state;
 
 #[tokio::main]
 async fn main() {
@@ -45,20 +49,14 @@ async fn main() {
 
     let database_connection_string = env::var("DATABASE_URL")
         .unwrap_or("mysql://library:library@localhost:3306/library".to_string());
-    let library = Library::new(&database_connection_string).await;
-    if let Err(error) = &library {
-        error!("Failed to initialize library: {error}");
+    let connection = Database::connect(&database_connection_string).await;
+    if let Err(error) = &connection {
+        error!("Failed to initialize db connection: {error}");
         return;
     }
-
-    let mut library = library.unwrap();
-    if let Err(error) = library.full_sync().await {
-        error!("Failed to syncronize library: {error}");
-        return;
-    }
-
-    let app = init_router(library);
-
+    let connection = connection.unwrap();
+    let state = create_state(connection);
+    let app = init_router(state);
     let governor_config = Arc::new(
         GovernorConfigBuilder::default()
             .per_second(config.rate_limit_per_second())
