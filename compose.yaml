@@ -4,9 +4,12 @@ services:
       context: .
       target: final
     ports:
-      - 1337:1337
+      - 1337:80
     environment:
       DATABASE_URL: mysql://library:library@host.docker.internal:3306/library
       RUST_LOG: trace
+      BIND_ADDRESS: 0.0.0.0
+      BIND_PORT: 80
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    hostname: able-server
