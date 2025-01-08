@@ -9,10 +9,13 @@ pub type User = Model;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
+    pub username: String,
     pub salt: String,
     pub hash: String,
     pub enabled: bool,
     pub created_at: DateTime<Utc>,
+    pub token: String,
+    pub token_expiry: DateTime<Utc>,
 }
 
 #[derive(Debug, EnumIter, DeriveRelation)]

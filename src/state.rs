@@ -1,9 +1,8 @@
+use crate::library::Library;
 use sea_orm::DatabaseConnection;
 
-use crate::{auth::UserAuthentication, library::Library};
-
 #[derive(Clone)]
-pub struct AppState(Library, UserAuthentication, DatabaseConnection);
+pub struct AppState(Library, DatabaseConnection);
 
 impl AppState {
     pub fn library(&self) -> &Library {
@@ -13,26 +12,15 @@ impl AppState {
         &mut self.0
     }
 
-    pub fn auth(&self) -> &UserAuthentication {
-        &self.1
-    }
-    pub fn auth_mut(&mut self) -> &mut UserAuthentication {
-        &mut self.1
-    }
-
     pub fn db(&self) -> DatabaseConnection {
-        self.2.clone()
+        self.1.clone()
     }
 
-    pub fn new(library: Library, auth: UserAuthentication, db: DatabaseConnection) -> Self {
-        Self(library, auth, db)
+    pub fn new(library: Library, db: DatabaseConnection) -> Self {
+        Self(library, db)
     }
 }
 
 pub fn create_state(db_connection: DatabaseConnection) -> AppState {
-    AppState::new(
-        Library::default(),
-        UserAuthentication::default(),
-        db_connection,
-    )
+    AppState::new(Library::default(), db_connection)
 }

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum ApiErrorCode {
     BadRequest = 400,
+    Unauthorized = 402,
     NotFound = 404,
     InternalServerError = 500,
 }

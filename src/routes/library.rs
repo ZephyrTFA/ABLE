@@ -1,8 +1,10 @@
 use axum::{
     extract::{self, State},
-    Json,
+    routing::{delete, get, post, put},
+    Json, Router,
 };
 use axum_macros::debug_handler;
+use log::debug;
 
 use crate::{
     library::LibraryErrorStatus,
@@ -15,7 +17,7 @@ use crate::{
     state::AppState,
 };
 
-type Response<T> = Result<Json<ApiResponse<T>>, Json<ApiResponse<ApiError>>>;
+use super::Response;
 
 impl From<LibraryErrorStatus> for Json<ApiResponse<ApiError>> {
     fn from(value: LibraryErrorStatus) -> Self {
@@ -24,6 +26,16 @@ impl From<LibraryErrorStatus> for Json<ApiResponse<ApiError>> {
             value.to_string(),
         )))
     }
+}
+
+pub fn library_router() -> Router<AppState> {
+    debug!("Registering library router");
+    Router::new()
+        .route("/", get(get_books))
+        .route("/{id}", get(get_book_by_id))
+        .route("/{id}", post(add_book))
+        .route("/{id}", put(update_book))
+        .route("/{id}", delete(drop_book))
 }
 
 pub async fn add_book(
