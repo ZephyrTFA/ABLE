@@ -8,7 +8,10 @@ use sea_orm::{
 };
 use tokio::sync::Mutex;
 
-use crate::orm::book::{self, Book};
+use crate::{
+    model::request::{pagination::Pagination, search::BookSearch},
+    orm::book::{self, Book},
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct Library {
@@ -20,6 +23,7 @@ pub enum LibraryErrorStatus {
     IsbnExists,
     IsbnMismatch,
     IdNotFound,
+    PaginationInvalid,
     DatabaseError,
 }
 
@@ -29,6 +33,7 @@ impl Display for LibraryErrorStatus {
             Self::IsbnExists => f.write_str("isbn exists"),
             Self::IsbnMismatch => f.write_str("isbn mismatch"),
             Self::IdNotFound => f.write_str("id not found"),
+            Self::PaginationInvalid => f.write_str("pagination invalid"),
             Self::DatabaseError => f.write_str("database error"),
         }
     }
@@ -106,9 +111,49 @@ impl Library {
     pub async fn get_books(
         &mut self,
         database: &DatabaseConnection,
+        pagination: Pagination,
+        search: BookSearch,
     ) -> Result<Vec<Book>, LibraryErrorStatus> {
         self.full_sync(database).await?;
-        Ok(self.books.lock().await.values().cloned().collect())
+
+        let books = self.books.lock().await;
+        let mut books = books.values().collect::<Vec<_>>();
+
+        if let Some(query_title) = search.title {
+            books.retain(|b| b.title.contains(&query_title));
+        }
+        if let Some(query_author) = search.author {
+            books.retain(|b| b.author.contains(&query_author));
+        }
+        if let Some(query_isbn) = search.isbn {
+            books.retain(|b| b.isbn.contains(&query_isbn));
+        }
+
+        books.sort_by_key(|b| b.id);
+
+        let page = pagination.page();
+        let per_page = pagination.per_page();
+        if page == 0 {
+            return Ok(books
+                .into_iter()
+                .rev()
+                .take(per_page)
+                .rev()
+                .cloned()
+                .collect());
+        }
+
+        let start = (page - 1) * per_page;
+        if start > books.len() {
+            return Err(LibraryErrorStatus::PaginationInvalid);
+        }
+
+        Ok(books
+            .into_iter()
+            .skip(start)
+            .take(per_page)
+            .cloned()
+            .collect())
     }
 
     pub async fn get_book_by_isbn(
@@ -140,13 +185,10 @@ impl Library {
         id: i32,
         database: &DatabaseConnection,
     ) -> Result<Book, LibraryErrorStatus> {
-        let entry = self
-            .get_books(database)
-            .await?
-            .into_iter()
-            .find(|book| book.id == id);
-        if let Some(book) = entry {
-            return Ok(book.clone());
+        let books = self.books.lock().await;
+        let book = books.iter().find(|b| b.1.id == id);
+        if let Some(book) = book {
+            return Ok(book.1.clone());
         }
 
         trace!("fetching db entry");

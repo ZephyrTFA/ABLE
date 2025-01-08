@@ -1,5 +1,5 @@
 use axum::{
-    extract::{self, State},
+    extract::{self, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -8,10 +8,13 @@ use log::debug;
 
 use crate::{
     library::LibraryErrorStatus,
-    model::response::{
-        api::{ApiError, ApiErrorCode, ApiResponse},
-        book::BookResponse,
-        books::BooksResponse,
+    model::{
+        request::{pagination::Pagination, search::BookSearch},
+        response::{
+            api::{ApiError, ApiErrorCode, ApiResponse},
+            book::BookResponse,
+            books::BooksResponse,
+        },
     },
     orm::book::Book,
     state::AppState,
@@ -47,10 +50,17 @@ pub async fn add_book(
     Ok(Json(ApiResponse::success(None)))
 }
 
-pub async fn get_books(State(mut state): State<AppState>) -> Response<BooksResponse> {
+pub async fn get_books(
+    State(mut state): State<AppState>,
+    pagination: Query<Pagination>,
+    search: Query<BookSearch>,
+) -> Response<BooksResponse> {
     let database = state.db();
     Ok(Json(ApiResponse::success(Some(BooksResponse {
-        books: state.library_mut().get_books(&database).await?,
+        books: state
+            .library_mut()
+            .get_books(&database, pagination.0, search.0)
+            .await?,
     }))))
 }
 
