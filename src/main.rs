@@ -12,7 +12,9 @@ use routes::init_router;
 use sea_orm::Database;
 use state::create_state;
 use tokio::net::TcpListener;
-use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+use tower_governor::{
+    governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
+};
 
 pub mod auth;
 pub mod config;
@@ -59,6 +61,7 @@ async fn main() {
     let app = init_router(state);
     let governor_config = Arc::new(
         GovernorConfigBuilder::default()
+            .key_extractor(SmartIpKeyExtractor)
             .per_second(config.rate_limit_per_second())
             .burst_size(config.rate_limit_burst())
             .finish()
