@@ -12,4 +12,9 @@ jobs:
     steps:
       - name: Docker Compose
         run: |
-          docker compose
+          docker build -t able:latest .
+
+      - name: Upload as Artifact
+        uses: ishworkh/container-image-artifact-upload@v2.0.0
+        with:
+          image: able:latest
