@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 argon2 = "0.5.3"
 axum = "0.8.1"
+axum-auth = { version = "0.7.0", features = ["auth-bearer"] }
 axum-login = "0.17.0"
 axum-macros = "0.5.0"
 bitflags = "2.6.0"
@@ -16,8 +17,16 @@ log = "0.4.22"
 once_cell = "1.20.2"
 password-hash = "0.5.0"
 rand = "0.8.5"
-sea-orm = { version = "1.1.3", features = ["runtime-tokio-rustls", "sqlx-mysql"] }
-sea-query = { version = "0.32.1", features = ["with-chrono", "backend-mysql", "derive", "thread-safe"] }
+sea-orm = { version = "1.1.3", features = [
+    "runtime-tokio-rustls",
+    "sqlx-mysql",
+] }
+sea-query = { version = "0.32.1", features = [
+    "with-chrono",
+    "backend-mysql",
+    "derive",
+    "thread-safe",
+] }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.134"
 tokio = { version = "1.42.0", features = ["full"] }
