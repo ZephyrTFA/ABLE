@@ -1,6 +1,5 @@
 use axum::{
     extract::{self, Query, State},
-    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -20,7 +19,7 @@ use crate::{
     state::AppState,
 };
 
-use super::{auth::login_from_headers, Response};
+use super::{auth::ApiUser, Response};
 
 impl From<LibraryErrorStatus> for Json<ApiResponse<ApiError>> {
     fn from(value: LibraryErrorStatus) -> Self {
@@ -43,11 +42,9 @@ pub fn library_router() -> Router<AppState> {
 
 pub async fn add_book(
     State(mut state): State<AppState>,
-    headers: HeaderMap,
+    ApiUser(_): ApiUser,
     extract::Json(book): extract::Json<Book>,
 ) -> Response<String> {
-    login_from_headers(&state.db(), &headers).await?;
-
     let database = state.db();
     state.library_mut().add_book(book, &database).await?;
     Ok(Json(ApiResponse::success(None)))
@@ -55,12 +52,10 @@ pub async fn add_book(
 
 pub async fn get_books(
     State(mut state): State<AppState>,
+    ApiUser(_): ApiUser,
     pagination: Query<Pagination>,
     search: Query<BookSearch>,
-    headers: HeaderMap,
 ) -> Response<BooksResponse> {
-    login_from_headers(&state.db(), &headers).await?;
-
     let database = state.db();
     Ok(Json(ApiResponse::success(Some(BooksResponse {
         books: state
@@ -72,11 +67,9 @@ pub async fn get_books(
 
 pub async fn get_book_by_id(
     State(mut state): State<AppState>,
+    ApiUser(_): ApiUser,
     extract::Path(id): extract::Path<i32>,
-    headers: HeaderMap,
 ) -> Response<BookResponse> {
-    login_from_headers(&state.db(), &headers).await?;
-
     let database = state.db();
     let book = state.library_mut().get_book_by_id(id, &database).await;
     if book.is_err() {
@@ -100,12 +93,10 @@ pub async fn get_book_by_id(
 
 pub async fn update_book(
     State(mut state): State<AppState>,
+    ApiUser(_): ApiUser,
     extract::Path(id): extract::Path<i32>,
-    headers: HeaderMap,
     extract::Json(book): extract::Json<Book>,
 ) -> Response<String> {
-    login_from_headers(&state.db(), &headers).await?;
-
     if book.id != id {
         return Err(Json(ApiResponse::error(ApiError::new(
             ApiErrorCode::BadRequest,
@@ -119,11 +110,9 @@ pub async fn update_book(
 
 pub async fn drop_book(
     State(mut state): State<AppState>,
+    ApiUser(_): ApiUser,
     extract::Path(id): extract::Path<i32>,
-    headers: HeaderMap,
 ) -> Response<String> {
-    login_from_headers(&state.db(), &headers).await?;
-
     let database = state.db();
     state.library_mut().drop_book(id, &database).await?;
     Ok(Json(ApiResponse::success(None)))

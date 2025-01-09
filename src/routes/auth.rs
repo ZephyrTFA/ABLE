@@ -1,4 +1,9 @@
-use axum::{extract::State, http::HeaderMap, routing::post, Form, Json, Router};
+use axum::{
+    extract::{FromRequestParts, State},
+    http::header,
+    routing::post,
+    Form, Json, Router,
+};
 use axum_login::tracing::warn;
 use chrono::Utc;
 use log::debug;
@@ -13,7 +18,7 @@ use crate::{
             login::LoginResponse,
         },
     },
-    orm::user,
+    orm::user::{self, User},
     state::AppState,
 };
 
@@ -22,6 +27,38 @@ use super::Response;
 pub fn auth_router() -> Router<AppState> {
     debug!("Registering authentication router.");
     Router::new().route("/login", post(login))
+}
+
+#[allow(unused)]
+pub struct ApiUser(pub User);
+impl FromRequestParts<AppState> for ApiUser {
+    type Rejection = Json<ApiResponse<ApiError>>;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let db = state.db();
+
+        let header = parts.headers.get(header::AUTHORIZATION);
+        if header.is_none() {
+            return Err(Json(ApiResponse::error(ApiError::new(
+                ApiErrorCode::BadRequest,
+                "No authorization token provided.".to_string(),
+            ))));
+        }
+
+        let token = header.unwrap().to_str();
+        if token.is_err() {
+            return Err(Json(ApiResponse::error(ApiError::new(
+                ApiErrorCode::BadRequest,
+                "Malformed authorization token provided.".to_string(),
+            ))));
+        }
+        let token = token.unwrap();
+
+        Ok(ApiUser(login_from_token(&db, token).await?))
+    }
 }
 
 async fn login(
@@ -44,28 +81,6 @@ async fn login(
     }
 
     Ok(Json(ApiResponse::success(Some(login.unwrap()))))
-}
-
-pub async fn login_from_headers(
-    db: &DatabaseConnection,
-    headers: &HeaderMap,
-) -> Result<user::Model, Json<ApiResponse<ApiError>>> {
-    let auth_header = headers.get("authorization");
-    if auth_header.is_none() {
-        return Err(Json(ApiResponse::error(ApiError::new(
-            ApiErrorCode::Unauthorized,
-            "No authorization token passed.".to_string(),
-        ))));
-    }
-    let token = auth_header.unwrap().to_str();
-    if token.is_err() {
-        return Err(Json(ApiResponse::error(ApiError::new(
-            ApiErrorCode::BadRequest,
-            "Malformed authorization token.".to_string(),
-        ))));
-    }
-
-    return login_from_token(db, token.unwrap()).await;
 }
 
 pub async fn login_from_token(
