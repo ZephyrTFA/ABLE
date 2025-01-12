@@ -2,6 +2,7 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20220101_000001_create_table_book;
 mod m20220101_000002_create_table_user;
+mod m20220101_000003_create_table_permissions;
 
 pub struct Migrator;
 
@@ -11,6 +12,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20220101_000001_create_table_book::Migration),
             Box::new(m20220101_000002_create_table_user::Migration),
+            Box::new(m20220101_000003_create_table_permissions::Migration),
         ]
     }
 }
