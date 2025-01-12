@@ -3,6 +3,31 @@
 version = 4
 
 [[package]]
+name = "able"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "axum",
+ "axum-auth",
+ "axum-login",
+ "axum-macros",
+ "bitflags",
+ "chrono",
+ "dotenv",
+ "env_logger",
+ "log",
+ "once_cell",
+ "password-hash",
+ "rand",
+ "sea-orm",
+ "sea-query",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower_governor",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2268,31 +2293,6 @@ dependencies = [
  "spki",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "rust-workspace"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "axum",
- "axum-auth",
- "axum-login",
- "axum-macros",
- "bitflags",
- "chrono",
- "dotenv",
- "env_logger",
- "log",
- "once_cell",
- "password-hash",
- "rand",
- "sea-orm",
- "sea-query",
- "serde",
- "serde_json",
- "tokio",
- "tower_governor",
 ]
 
 [[package]]
