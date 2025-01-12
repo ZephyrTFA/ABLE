@@ -15,7 +15,7 @@ impl MigrationTrait for Migration {
                     .col(string(Book::Title))
                     .col(string(Book::Author))
                     .col(integer(Book::PublicationYear))
-                    .col(string(Book::ISBN))
+                    .col(string(Book::Isbn))
                     .col(timestamp(Book::CreatedAt))
                     .col(timestamp(Book::UpdatedAt))
                     .to_owned(),
@@ -37,7 +37,7 @@ enum Book {
     Title,
     Author,
     PublicationYear,
-    ISBN,
+    Isbn,
     CreatedAt,
     UpdatedAt,
 }
