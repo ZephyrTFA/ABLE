@@ -71,7 +71,7 @@ pub async fn get_books(
 pub async fn get_book_by_id(
     State(mut state): State<AppState>,
     ApiUser(_): ApiUser,
-    extract::Path(id): extract::Path<i32>,
+    extract::Path(id): extract::Path<u64>,
 ) -> Response<BookResponse> {
     let database = state.db();
     let book = state.library_mut().get_book_by_id(id, &database).await;
@@ -97,7 +97,7 @@ pub async fn get_book_by_id(
 pub async fn update_book(
     State(mut state): State<AppState>,
     ApiUser(_): ApiUser,
-    extract::Path(id): extract::Path<i32>,
+    extract::Path(id): extract::Path<u64>,
     extract::Json(book): extract::Json<Book>,
 ) -> Response<UpdateBookResponse> {
     if book.id != id {
@@ -114,7 +114,7 @@ pub async fn update_book(
 pub async fn drop_book(
     State(mut state): State<AppState>,
     ApiUser(_): ApiUser,
-    extract::Path(id): extract::Path<i32>,
+    extract::Path(id): extract::Path<u64>,
 ) -> Response<DropBookResponse> {
     let database = state.db();
     state.library_mut().drop_book(id, &database).await?;

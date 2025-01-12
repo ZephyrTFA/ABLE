@@ -14,7 +14,7 @@ pub type User = Model;
 #[sea_orm(table_name = "user")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: u64,
     pub username: String,
     pub salt: String,
     pub hash: String,
@@ -22,7 +22,7 @@ pub struct Model {
     pub created_at: DateTime<Utc>,
     pub token: String,
     pub token_expiry: DateTime<Utc>,
-    pub permission_id: i32,
+    pub permission_id: u64,
 }
 
 #[derive(Debug, EnumIter, DeriveRelation)]

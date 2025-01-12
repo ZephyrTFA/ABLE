@@ -8,10 +8,10 @@ pub type Book = Model;
 #[sea_orm(table_name = "book")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: u64,
     pub title: String,
     pub author: String,
-    pub publication_year: i32,
+    pub publication_year: u64,
     pub isbn: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

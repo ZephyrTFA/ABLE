@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "permission_set")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: u64,
     #[sea_orm(primary_key)]
-    pub user: i32,
+    pub user: u64,
     pub permissions: u64,
 }
 

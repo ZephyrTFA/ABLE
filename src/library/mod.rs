@@ -182,7 +182,7 @@ impl Library {
 
     pub async fn get_book_by_id(
         &mut self,
-        id: i32,
+        id: u64,
         database: &DatabaseConnection,
     ) -> Result<Book, LibraryErrorStatus> {
         let books = self.books.lock().await;
@@ -241,7 +241,7 @@ impl Library {
 
     pub async fn drop_book(
         &mut self,
-        id: i32,
+        id: u64,
         database: &DatabaseConnection,
     ) -> Result<(), LibraryErrorStatus> {
         let db_result = book::Entity::delete_by_id(id).exec(database).await;

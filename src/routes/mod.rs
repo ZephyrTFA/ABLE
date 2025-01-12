@@ -3,6 +3,7 @@ use axum::{Json, Router};
 use library::library_router;
 use log::trace;
 use login::login_router;
+use user::user_router;
 
 use crate::{
     model::response::api::{ApiError, ApiResponse},
@@ -12,6 +13,7 @@ use crate::{
 mod auth;
 mod library;
 mod login;
+mod user;
 
 pub type Response<T> = Result<Json<ApiResponse<T>>, Json<ApiResponse<ApiError>>>;
 
@@ -21,5 +23,6 @@ pub fn init_router(state: AppState) -> Router {
         .nest("/books", library_router())
         .nest("/login", login_router())
         .nest("/auth", auth_router())
+        .nest("/user", user_router())
         .with_state(state)
 }

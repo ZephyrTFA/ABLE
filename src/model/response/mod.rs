@@ -7,3 +7,4 @@ pub mod get_permissions;
 pub mod login;
 pub mod set_permissions;
 pub mod update_book;
+pub mod user;

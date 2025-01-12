@@ -33,9 +33,7 @@ async fn get_permissions(
     ApiUser(_): ApiUser,
     Path(target_id): Path<u64>,
 ) -> Response<GetPermissionsResponse> {
-    let db_result = user::Entity::find_by_id(target_id as i32)
-        .one(&state.db())
-        .await;
+    let db_result = user::Entity::find_by_id(target_id).one(&state.db()).await;
     if let Err(error) = &db_result {
         warn!("Failed to fetch user: {error}");
         return Err(Json(ApiResponse::error(ApiError::new(
