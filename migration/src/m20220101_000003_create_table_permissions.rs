@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
                     .table(Permissions::Table)
                     .if_not_exists()
                     .col(pk_auto(Permissions::Id))
-                    .col(integer(Permissions::User).primary_key())
+                    .col(integer(Permissions::User))
                     .col(integer(Permissions::Permissions))
                     .foreign_key(
                         ForeignKey::create()
