@@ -1,5 +1,7 @@
 use sea_orm_migration::{prelude::*, schema::*};
 
+use crate::Book;
+
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -11,12 +13,17 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Book::Table)
                     .if_not_exists()
-                    .col(pk_auto(Book::Id))
-                    .col(string(Book::Title))
-                    .col(string(Book::Author))
-                    .col(integer(Book::PublicationYear))
-                    .col(string(Book::Isbn))
-                    .col(timestamp(Book::CreatedAt))
+                    .col(
+                        integer_uniq(Book::Id)
+                            .not_null()
+                            .auto_increment()
+                            .primary_key(),
+                    )
+                    .col(string(Book::Title).not_null())
+                    .col(string(Book::Author).not_null())
+                    .col(integer(Book::PublicationYear).not_null())
+                    .col(string(Book::Isbn).not_null())
+                    .col(timestamp(Book::CreatedAt).not_null())
                     .col(timestamp(Book::UpdatedAt))
                     .to_owned(),
             )
@@ -28,16 +35,4 @@ impl MigrationTrait for Migration {
             .drop_table(Table::drop().table(Book::Table).to_owned())
             .await
     }
-}
-
-#[derive(Iden)]
-enum Book {
-    Table,
-    Id,
-    Title,
-    Author,
-    PublicationYear,
-    Isbn,
-    CreatedAt,
-    UpdatedAt,
 }

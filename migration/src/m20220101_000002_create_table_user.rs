@@ -1,5 +1,7 @@
 use sea_orm_migration::{prelude::*, schema::*};
 
+use crate::User;
+
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -11,12 +13,17 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(User::Table)
                     .if_not_exists()
-                    .col(pk_auto(User::Id))
-                    .col(string(User::Username))
-                    .col(string(User::Salt))
+                    .col(
+                        integer_uniq(User::Id)
+                            .not_null()
+                            .auto_increment()
+                            .primary_key(),
+                    )
+                    .col(string(User::Username).not_null().unique_key())
+                    .col(string(User::Salt).not_null())
                     .col(string(User::Hash))
-                    .col(boolean(User::Enabled))
-                    .col(timestamp(User::CreatedAt))
+                    .col(boolean(User::Enabled).not_null())
+                    .col(timestamp(User::CreatedAt).not_null())
                     .col(string(User::Token))
                     .col(timestamp(User::TokenExpiry))
                     .to_owned(),
@@ -29,17 +36,4 @@ impl MigrationTrait for Migration {
             .drop_table(Table::drop().table(User::Table).to_owned())
             .await
     }
-}
-
-#[derive(Iden)]
-enum User {
-    Table,
-    Id,
-    Username,
-    Salt,
-    Hash,
-    Enabled,
-    CreatedAt,
-    Token,
-    TokenExpiry,
 }

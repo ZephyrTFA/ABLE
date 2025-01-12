@@ -16,3 +16,38 @@ impl MigratorTrait for Migrator {
         ]
     }
 }
+
+#[derive(Iden)]
+pub enum Book {
+    Table,
+    Id,
+    Title,
+    Author,
+    PublicationYear,
+    Isbn,
+    CreatedAt,
+    UpdatedAt,
+}
+
+#[derive(Iden)]
+pub enum User {
+    Table,
+    Id,
+    Username,
+    Salt,
+    Hash,
+    Enabled,
+    CreatedAt,
+    Token,
+    TokenExpiry,
+    PermissionId,
+}
+
+#[derive(Iden)]
+pub enum Permissions {
+    Table,
+    Id,
+    User,
+    #[allow(clippy::enum_variant_names)]
+    Permissions,
+}

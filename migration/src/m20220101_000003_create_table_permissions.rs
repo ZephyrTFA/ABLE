@@ -1,5 +1,7 @@
 use sea_orm_migration::{prelude::*, schema::*};
 
+use crate::{Permissions, User};
+
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -11,14 +13,20 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Permissions::Table)
                     .if_not_exists()
-                    .col(pk_auto(Permissions::Id))
-                    .col(integer(Permissions::User))
-                    .col(integer(Permissions::Permissions))
+                    .col(
+                        integer_uniq(Permissions::Id)
+                            .not_null()
+                            .auto_increment()
+                            .primary_key(),
+                    )
+                    .col(integer_uniq(Permissions::User).not_null())
+                    .col(integer(Permissions::Permissions).not_null())
                     .foreign_key(
                         ForeignKey::create()
+                            .name("FK_permissions_user_id")
                             .from(User::Table, User::Id)
                             .to(Permissions::Table, Permissions::User)
-                            .name("FK_permissions_user_id")
+                            .on_update(ForeignKeyAction::Cascade)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .to_owned(),
@@ -49,20 +57,4 @@ impl MigrationTrait for Migration {
             )
             .await
     }
-}
-
-#[derive(Iden)]
-enum Permissions {
-    Table,
-    Id,
-    User,
-    #[allow(clippy::enum_variant_names)]
-    Permissions,
-}
-
-#[derive(Iden)]
-enum User {
-    Table,
-    Id,
-    PermissionId,
 }
