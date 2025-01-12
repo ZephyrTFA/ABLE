@@ -7,7 +7,7 @@
 # Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
 
 ARG RUST_VERSION=1.83.0
-ARG APP_NAME=rust-workspace
+ARG APP_NAME=able
 
 ################################################################################
 # Create a stage for building the application.
@@ -15,6 +15,7 @@ ARG APP_NAME=rust-workspace
 FROM rust:${RUST_VERSION}-alpine AS build
 ARG APP_NAME
 WORKDIR /app
+COPY . .
 
 # Install host build dependencies.
 RUN apk add --no-cache clang lld musl-dev git
