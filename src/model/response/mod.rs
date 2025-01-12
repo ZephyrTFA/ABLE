@@ -1,4 +1,9 @@
+pub mod add_book;
 pub mod api;
 pub mod book;
 pub mod books;
+pub mod drop_book;
+pub mod get_permissions;
 pub mod login;
+pub mod set_permissions;
+pub mod update_book;

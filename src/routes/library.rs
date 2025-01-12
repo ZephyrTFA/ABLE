@@ -10,16 +10,19 @@ use crate::{
     model::{
         request::{pagination::Pagination, search::BookSearch},
         response::{
+            add_book::AddBookResponse,
             api::{ApiError, ApiErrorCode, ApiResponse},
             book::BookResponse,
-            books::BooksResponse,
+            books::GetBooksResponse,
+            drop_book::DropBookResponse,
+            update_book::UpdateBookResponse,
         },
     },
     orm::book::Book,
     state::AppState,
 };
 
-use super::{auth::ApiUser, Response};
+use super::{login::ApiUser, Response};
 
 impl From<LibraryErrorStatus> for Json<ApiResponse<ApiError>> {
     fn from(value: LibraryErrorStatus) -> Self {
@@ -44,10 +47,10 @@ pub async fn add_book(
     State(mut state): State<AppState>,
     ApiUser(_): ApiUser,
     extract::Json(book): extract::Json<Book>,
-) -> Response<String> {
+) -> Response<AddBookResponse> {
     let database = state.db();
     state.library_mut().add_book(book, &database).await?;
-    Ok(Json(ApiResponse::success(None)))
+    Ok(Json(ApiResponse::success(AddBookResponse)))
 }
 
 pub async fn get_books(
@@ -55,14 +58,14 @@ pub async fn get_books(
     ApiUser(_): ApiUser,
     pagination: Query<Pagination>,
     search: Query<BookSearch>,
-) -> Response<BooksResponse> {
+) -> Response<GetBooksResponse> {
     let database = state.db();
-    Ok(Json(ApiResponse::success(Some(BooksResponse {
+    Ok(Json(ApiResponse::success(GetBooksResponse {
         books: state
             .library_mut()
             .get_books(&database, pagination.0, search.0)
             .await?,
-    }))))
+    })))
 }
 
 pub async fn get_book_by_id(
@@ -86,9 +89,9 @@ pub async fn get_book_by_id(
     }
     let book = book.unwrap();
 
-    Ok(Json(ApiResponse::success(Some(BookResponse {
+    Ok(Json(ApiResponse::success(BookResponse {
         book: book.clone(),
-    }))))
+    })))
 }
 
 pub async fn update_book(
@@ -96,7 +99,7 @@ pub async fn update_book(
     ApiUser(_): ApiUser,
     extract::Path(id): extract::Path<i32>,
     extract::Json(book): extract::Json<Book>,
-) -> Response<String> {
+) -> Response<UpdateBookResponse> {
     if book.id != id {
         return Err(Json(ApiResponse::error(ApiError::new(
             ApiErrorCode::BadRequest,
@@ -105,15 +108,15 @@ pub async fn update_book(
     }
     let database = state.db();
     state.library_mut().update_book(book, &database).await?;
-    Ok(Json(ApiResponse::success(None)))
+    Ok(Json(ApiResponse::success(UpdateBookResponse)))
 }
 
 pub async fn drop_book(
     State(mut state): State<AppState>,
     ApiUser(_): ApiUser,
     extract::Path(id): extract::Path<i32>,
-) -> Response<String> {
+) -> Response<DropBookResponse> {
     let database = state.db();
     state.library_mut().drop_book(id, &database).await?;
-    Ok(Json(ApiResponse::success(None)))
+    Ok(Json(ApiResponse::success(DropBookResponse)))
 }

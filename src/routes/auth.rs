@@ -1,111 +1,84 @@
 use axum::{
-    extract::{FromRequestParts, State},
-    http::header,
-    routing::post,
-    Form, Json, Router,
+    extract::{Path, State},
+    routing::{get, put},
+    Json, Router,
 };
 use axum_login::tracing::warn;
-use chrono::Utc;
-use log::debug;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{EntityTrait, IntoActiveModel, QueryFilter};
 
 use crate::{
-    auth::{UserAuthentication, UserAuthenticationError},
-    model::{
-        request::login::LoginRequest,
-        response::{
-            api::{ApiError, ApiErrorCode, ApiResponse},
-            login::LoginResponse,
-        },
+    model::response::{
+        api::{ApiError, ApiErrorCode, ApiResponse},
+        get_permissions::GetPermissionsResponse,
+        set_permissions::SetPermissionsResponse,
     },
-    orm::user::{self, User},
+    orm::{
+        permissions::{self, Permission},
+        user,
+    },
     state::AppState,
 };
 
-use super::Response;
+pub type UserPermissions = permissions::Model;
+use super::{login::ApiUser, Response};
 
 pub fn auth_router() -> Router<AppState> {
-    debug!("Registering authentication router.");
-    Router::new().route("/login", post(login))
+    Router::new()
+        .route("/{id}", get(get_permissions))
+        .route("/{id}", put(set_permissions))
 }
 
-#[allow(unused)]
-pub struct ApiUser(pub User);
-impl FromRequestParts<AppState> for ApiUser {
-    type Rejection = Json<ApiResponse<ApiError>>;
-
-    async fn from_request_parts(
-        parts: &mut axum::http::request::Parts,
-        state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
-        let db = state.db();
-
-        let header = parts.headers.get(header::AUTHORIZATION);
-        if header.is_none() {
-            return Err(Json(ApiResponse::error(ApiError::new(
-                ApiErrorCode::BadRequest,
-                "No authorization token provided.".to_string(),
-            ))));
-        }
-
-        let token = header.unwrap().to_str();
-        if token.is_err() {
-            return Err(Json(ApiResponse::error(ApiError::new(
-                ApiErrorCode::BadRequest,
-                "Malformed authorization token provided.".to_string(),
-            ))));
-        }
-        let token = token.unwrap();
-
-        Ok(ApiUser(login_from_token(&db, token).await?))
-    }
-}
-
-async fn login(
+async fn get_permissions(
     State(state): State<AppState>,
-    Form(login): Form<LoginRequest>,
-) -> Response<LoginResponse> {
-    let db = state.db();
-    let login = UserAuthentication::try_login(login, db).await;
-
-    if let Err(error) = &login {
-        return Err(Json(match error {
-            UserAuthenticationError::InternalServerError => ApiResponse::error(ApiError::new(
-                ApiErrorCode::InternalServerError,
-                String::new(),
-            )),
-            UserAuthenticationError::Unauthorized => {
-                ApiResponse::error(ApiError::new(ApiErrorCode::Unauthorized, String::new()))
-            }
-        }));
-    }
-
-    Ok(Json(ApiResponse::success(Some(login.unwrap()))))
-}
-
-pub async fn login_from_token(
-    db: &DatabaseConnection,
-    token: &str,
-) -> Result<user::Model, Json<ApiResponse<ApiError>>> {
-    let db_result = user::Entity::find()
-        .filter(user::Column::Token.eq(token))
-        .filter(user::Column::TokenExpiry.gt(Utc::now()))
-        .one(db)
+    ApiUser(_): ApiUser,
+    Path(target_id): Path<u64>,
+) -> Response<GetPermissionsResponse> {
+    let db_result = user::Entity::find_by_id(target_id as i32)
+        .one(&state.db())
         .await;
     if let Err(error) = &db_result {
-        warn!("Failed to query db for token authentication: {error}");
+        warn!("Failed to fetch user: {error}");
         return Err(Json(ApiResponse::error(ApiError::new(
             ApiErrorCode::InternalServerError,
             String::new(),
         ))));
     }
 
-    let user = db_result.unwrap();
-    if user.is_none() {
+    let target_user = db_result.unwrap();
+    if target_user.is_none() {
         return Err(Json(ApiResponse::error(ApiError::new(
-            ApiErrorCode::Unauthorized,
+            ApiErrorCode::NotFound,
+            "User does not exist.".to_string(),
+        ))));
+    }
+    let target_user = target_user.unwrap();
+    let permissions = target_user.permissions(state.db()).await?;
+    Ok(Json(ApiResponse::success(GetPermissionsResponse {
+        permissions,
+    })))
+}
+
+async fn set_permissions(
+    State(state): State<AppState>,
+    ApiUser(caller): ApiUser,
+    Json(permissions): Json<UserPermissions>,
+) -> Response<SetPermissionsResponse> {
+    caller
+        .assert_permission(state.db(), Permission::PermissionsUpdate)
+        .await?;
+
+    let db_result = permissions::Entity::update(permissions.clone().into_active_model())
+        .belongs_to(&permissions)
+        .exec(&state.db())
+        .await;
+
+    if let Err(error) = &db_result {
+        warn!("Failed to update user permissions: {error}");
+        return Err(Json(ApiResponse::error(ApiError::new(
+            ApiErrorCode::InternalServerError,
             String::new(),
         ))));
     }
-    Ok(user.unwrap())
+
+    Ok(Json(ApiResponse::success(SetPermissionsResponse)))
 }
