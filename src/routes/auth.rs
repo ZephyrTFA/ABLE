@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     routing::{get, put},
@@ -5,6 +7,7 @@ use axum::{
 };
 use axum_login::tracing::warn;
 use sea_orm::{EntityTrait, IntoActiveModel, QueryFilter};
+use tokio::sync::Mutex;
 
 use crate::{
     model::response::{
@@ -22,17 +25,19 @@ use crate::{
 pub type UserPermissions = permissions::Model;
 use super::{login::ApiUser, Response};
 
-pub fn auth_router() -> Router<AppState> {
+pub fn auth_router() -> Router<Arc<Mutex<AppState>>> {
     Router::new()
         .route("/{id}", get(get_permissions))
         .route("/{id}", put(set_permissions))
 }
 
 async fn get_permissions(
-    State(state): State<AppState>,
+    State(state): State<Arc<Mutex<AppState>>>,
     ApiUser(_): ApiUser,
     Path(target_id): Path<u64>,
 ) -> Response<GetPermissionsResponse> {
+    let state = state.lock().await;
+
     let db_result = user::Entity::find_by_id(target_id).one(&state.db()).await;
     if let Err(error) = &db_result {
         warn!("Failed to fetch user: {error}");
@@ -57,10 +62,12 @@ async fn get_permissions(
 }
 
 async fn set_permissions(
-    State(state): State<AppState>,
+    State(state): State<Arc<Mutex<AppState>>>,
     ApiUser(caller): ApiUser,
     Json(permissions): Json<UserPermissions>,
 ) -> Response<SetPermissionsResponse> {
+    let state = state.lock().await;
+
     caller
         .assert_permission(state.db(), Permission::PermissionsUpdate)
         .await?;

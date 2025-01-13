@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use axum::{
     extract::{Path, State},
@@ -9,6 +11,7 @@ use chrono::Utc;
 use password_hash::SaltString;
 use rand::thread_rng;
 use sea_orm::{ActiveValue, EntityTrait, IntoActiveModel, Set};
+use tokio::sync::Mutex;
 
 use crate::{
     model::{
@@ -33,7 +36,7 @@ use crate::{
 
 use super::{login::ApiUser, Response};
 
-pub fn user_router() -> Router<AppState> {
+pub fn user_router() -> Router<Arc<Mutex<AppState>>> {
     Router::new()
         .route("/", put(create_user))
         .route("/{id}", put(update_user))
@@ -41,10 +44,12 @@ pub fn user_router() -> Router<AppState> {
 }
 
 async fn change_password(
-    State(state): State<AppState>,
+    State(state): State<Arc<Mutex<AppState>>>,
     ApiUser(caller): ApiUser,
     Json(change_password_request): Json<ChangeUserPasswordRequest>,
 ) -> Response<ChangeUserPasswordResponse> {
+    let state = state.lock().await;
+
     let change_own_password = caller.id == change_password_request.user;
 
     if !change_own_password {
@@ -140,11 +145,13 @@ async fn change_password(
 }
 
 async fn update_user(
-    State(state): State<AppState>,
+    State(state): State<Arc<Mutex<AppState>>>,
     ApiUser(caller): ApiUser,
     Path(target_id): Path<u64>,
     Json(update_user_request): Json<UpdateUserRequest>,
 ) -> Response<UpdateUserResponse> {
+    let state = state.lock().await;
+
     caller
         .assert_permission(state.db(), Permission::UserUpdate)
         .await?;
@@ -173,10 +180,12 @@ async fn update_user(
 }
 
 async fn create_user(
-    State(state): State<AppState>,
+    State(state): State<Arc<Mutex<AppState>>>,
     ApiUser(caller): ApiUser,
     Json(create_user_request): Json<CreateUserRequest>,
 ) -> Response<CreateUserResponse> {
+    let state = state.lock().await;
+
     caller
         .assert_permission(state.db(), Permission::UserAdd)
         .await?;

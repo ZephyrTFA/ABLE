@@ -1,8 +1,11 @@
+use std::sync::Arc;
+
 use auth::auth_router;
 use axum::{Json, Router};
 use library::library_router;
 use log::trace;
 use login::login_router;
+use tokio::sync::Mutex;
 use user::user_router;
 
 use crate::{
@@ -24,5 +27,5 @@ pub fn init_router(state: AppState) -> Router {
         .nest("/login", login_router())
         .nest("/auth", auth_router())
         .nest("/user", user_router())
-        .with_state(state)
+        .with_state(Arc::new(Mutex::new(state)))
 }

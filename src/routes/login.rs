@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{FromRequestParts, State},
     http::header,
@@ -8,6 +10,7 @@ use axum_login::tracing::warn;
 use chrono::Utc;
 use log::debug;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use tokio::sync::Mutex;
 
 use crate::{
     auth::{UserAuthentication, UserAuthenticationError},
@@ -24,20 +27,21 @@ use crate::{
 
 use super::Response;
 
-pub fn login_router() -> Router<AppState> {
+pub fn login_router() -> Router<Arc<Mutex<AppState>>> {
     debug!("Registering authentication router.");
     Router::new().route("/login", post(login))
 }
 
 #[allow(unused)]
 pub struct ApiUser(pub User);
-impl FromRequestParts<AppState> for ApiUser {
+impl FromRequestParts<Arc<Mutex<AppState>>> for ApiUser {
     type Rejection = Json<ApiResponse<ApiError>>;
 
     async fn from_request_parts(
         parts: &mut axum::http::request::Parts,
-        state: &AppState,
+        state: &Arc<Mutex<AppState>>,
     ) -> Result<Self, Self::Rejection> {
+        let state = state.lock().await;
         let db = state.db();
 
         let header = parts.headers.get(header::AUTHORIZATION);
@@ -62,9 +66,11 @@ impl FromRequestParts<AppState> for ApiUser {
 }
 
 async fn login(
-    State(state): State<AppState>,
+    State(state): State<Arc<Mutex<AppState>>>,
     Form(login): Form<LoginRequest>,
 ) -> Response<LoginResponse> {
+    let state = state.lock().await;
+
     let db = state.db();
     let login = UserAuthentication::try_login(login, db).await;
 
